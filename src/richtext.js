@@ -1,8 +1,6 @@
 import React, { createElement, Fragment } from 'react';
 import PrismicRichText, { Elements } from 'prismic-richtext';
 import { Link as LinkHelper } from 'prismic-helpers';
-import { embeds } from './embeds';
-const createScript = typeof window !== `undefined` ? require("./embeds").createScript : () => {}
 
 function serialize(linkResolver, type, element, content, children, index) {
   switch(type) {
@@ -21,7 +19,6 @@ function serialize(linkResolver, type, element, content, children, index) {
     case Elements.list: return serializeStandardTag('ul', element, children, index);
     case Elements.oList: return serializeStandardTag('ol', element, children, index);
     case Elements.image: return serializeImage(linkResolver, element, index);
-    case Elements.embed: return serializeEmbed(element, index);
     case Elements.hyperlink: return serializeHyperlink(linkResolver, element, children, index);
     case Elements.label: return serializeLabel(element, children, index);
     case Elements.span: return serializeSpan(content);
@@ -77,28 +74,6 @@ function serializeImage(linkResolver, element, key) {
     propsWithUniqueKey({ className: [element.label || '', 'block-img'].join(' ') }, key),
     linkUrl ? createElement('a', Object.assign({ href: linkUrl }, linkTarget, relAttr), img) : img
   );
-}
-
-function serializeEmbed(element, key) {
-  if (embeds[element.oembed.provider_name]) {
-    createScript(embeds[element.oembed.provider_name]);
-  }
-
-  const className = `embed embed-${element.oembed.provider_name.toLowerCase()}`
-  const props = Object.assign({
-    "data-oembed": element.oembed.embed_url,
-    "data-oembed-type": element.oembed.type,
-    "data-oembed-provider": element.oembed.provider_name,
-    ref: (ref) => {
-      if (embeds[element.oembed.provider_name]) {
-        embeds[element.oembed.provider_name].load(ref)
-      }
-    },
-  }, element.label ? { className: `${className} ${element.label}` } : { className });
-
-  const embedHtml = createElement('div', { dangerouslySetInnerHTML: { __html: element.oembed.html }});
-
-  return createElement('div', propsWithUniqueKey(props, key), embedHtml);
 }
 
 export const asText = structuredText => PrismicRichText.asText(structuredText)
